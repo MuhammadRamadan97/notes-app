@@ -5,7 +5,7 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: "Karla", sans-serif;
+  font-family: "Cairo", sans-serif;
 }
 
 button:focus {
@@ -26,10 +26,6 @@ button:focus {
 .sidebar {
   width: 20%;
   height: 100vh;
-}
-
-.sidebar--note {
-  /* display: flex; */
 }
 
 .sidebar--header {
@@ -62,7 +58,7 @@ button:focus {
 }
 
 .editor {
-  width: 80%;
+  width: 90%;
   height: 100vh;
 }
 
@@ -92,13 +88,18 @@ button:focus {
 
 .text-snippet {
   padding-inline: 5px;
-  font-size: 0.8rem;
+  font-size: 1.2rem;
   font-weight: 400;
-  line-height: 1.2rem;
+  line-height: 1.1rem;
   color: #4a4e74;
   white-space: nowrap;
   overflow: hidden;
+  height: 1.5em;
   text-overflow: ellipsis;
+}
+
+.updated-time {
+  font-size: 0.8rem;
 }
 
 .selected-note {

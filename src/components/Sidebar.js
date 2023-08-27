@@ -1,6 +1,7 @@
 import React from "react"
 
 export default function Sidebar(props) {
+    const d = new Date()
     const noteElements = props.notes.map((note, index) => (
         <div key={note.id}>
             <div
@@ -11,9 +12,10 @@ export default function Sidebar(props) {
                 onClick={() => props.setCurrentNoteId(note.id)}
             >
                 <h4 className="text-snippet">{note.body.split('\n')[0]}</h4>
+                <div ><p className="updated-time">last update:<time className="time">{d.toLocaleDateString() !== note.time[0] && note.time[0]}{d.toLocaleDateString()== note.time[0] && note.time[1]}</time></p></div>
                 <button 
                     className="delete-btn"
-                    onClick={(event) => props.deleteNote(event, note.id)}
+                    onClick={() => props.deleteNote( note.id)}
                 >
                     <i className="gg-trash trash-icon"></i>
                 </button>
@@ -24,7 +26,7 @@ export default function Sidebar(props) {
     return (
         <section className="pane sidebar">
             <div className="sidebar--header">
-                <h3>Notes</h3>
+                <h3>ملاحظاتنا   </h3>
                 
                 <button className="new-note" onClick={props.newNote}>+</button>
             </div>

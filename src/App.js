@@ -1,22 +1,16 @@
-import React, { useEffect } from "react"
+import { useEffect, useState } from "react"
 import Sidebar from "./components/Sidebar"
 import Editor from "./components/Editor"
-import {initializeApp} from 'firebase/app';
-import {getDatabase, ref, push, set, child, get, onValue} from "firebase/database";
+import {addDoc, onSnapshot, doc, deleteDoc, setDoc } from "firebase/firestore"
+import { notesCollection, db } from "./firebase"
 
 import Split from "react-split"
-import {nanoid} from "nanoid"
 
 
 
 
-const firebaseConfig = {
-  
-  databaseURL: "https://notesapp-32701-default-rtdb.europe-west1.firebasedatabase.app"
-};
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app)
-const notesDB =  ref(database, "notes")
+
+
  
 
 
@@ -25,67 +19,66 @@ export default function App() {
     
     
     
+    const d = new Date()
+    const [notes, setNotes] = useState([])
+    const [currentNoteId, setCurrentNoteId] = useState("")
     
-    const [notes, setNotes] = React.useState([])
-    const [currentNoteId, setCurrentNoteId] = React.useState(
-        (notes[0] && notes[0].id) || ""
-    )
-    
-        
-  
-
-  
-
-    function createNewNote() {
-        const newNote = {
-            id: nanoid(),
-            body: "# Type your markdown note's title here"
-        }
-        setNotes(prevNotes => {
-            set(ref(database,'notes'), [newNote, ...prevNotes])
-            return [newNote, ...prevNotes]})
-        setCurrentNoteId(newNote.id)
-         
-        
-        
-    }
-    
-    function updateNote(text) {
-        set(ref(database,'notes'), notes)
-        setNotes(oldNotes => {
-          let arr=[]
-          oldNotes.map(oldNote => oldNote.id == currentNoteId ? arr.unshift({...oldNote,body: text}) : arr.push(oldNote))
-          
-        
-          return arr;
+         useEffect(() => {
+        const unsubscribe = onSnapshot(notesCollection, snapshot => {
+            const notesArr = snapshot.docs.map(doc => ({
+                ...doc.data(),
+                id: doc.id
+            }))
+            setNotes(notesArr)
         })
+        return unsubscribe
+    }, [])
+
+        useEffect(() => {
+        if (!currentNoteId) {
+            setCurrentNoteId(notes[0]?.id)
+        }
+    }, [notes])
         
+  
+console.log(d.toLocaleTimeString())
+  
 
+    async function createNewNote() {
+            const newNote = {
+            
+            body: "اكتب ملاحظتك هنا",
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            time: [ d.toLocaleDateString(), d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})]
+            
+        }
+       const newNoteRef = await addDoc(notesCollection, newNote)
+            
+        setCurrentNoteId(newNoteRef.id)
     }
     
-    function findCurrentNote() {
-        return notes.find(note => {
-            return note.id === currentNoteId
-        }) || notes[0]
-    }
-    
-    function deleteNote(event , noteId) {
-       event.stopPropagation()
-       const filteredNotes = [...notes.filter(oldNote => oldNote.id !== noteId)]
-        setNotes( filteredNotes)
-        set(ref(database,'notes'), filteredNotes)
+    async function updateNote(text) {
+        const docRef = doc(db, "notes", currentNoteId)
+        await setDoc(docRef, {body: text, updatedAt: Date.now(), time: [d.toLocaleDateString(), d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})]}, {merge: true})
+
     }
 
-    useEffect(() => {
-           return onValue(notesDB, snapshot => {
-                const data = snapshot.val()
-                if(data){
-                    
-                    setNotes(data)
-                }
-                
-            })
-        },[])
+   
+    
+    const currentNote =
+        notes.find(note => note.id === currentNoteId)
+        || notes[0]
+
+    const sortedNotes = notes.sort((a,b) => b.updatedAt - a.updatedAt)
+    
+    async function deleteNote(noteId) {
+       const docRef = doc(db, "notes", noteId)
+       await deleteDoc(docRef)
+        
+    }
+
+    console.log(sortedNotes)
 
     return (
         <main>
@@ -98,29 +91,28 @@ export default function App() {
                 className="split"
             >
                 <Sidebar
-                    notes={notes}
-                    currentNote={findCurrentNote()}
+                    notes={sortedNotes}
+                    currentNote={currentNote}
                     setCurrentNoteId={setCurrentNoteId}
                     newNote={createNewNote}
                     deleteNote={deleteNote}
                 />
-                {
-                    currentNoteId && 
-                    notes.length > 0 &&
+                
+                    
                     <Editor 
-                        currentNote={findCurrentNote()} 
+                        currentNote={currentNote} 
                         updateNote={updateNote} 
                     />
-                }
+                
             </Split>
             :
             <div className="no-notes">
-                <h1>You have no notes</h1>
+                <h1>لا يوجد أية ملاحظات</h1>
                 <button 
                     className="first-note" 
                     onClick={createNewNote}
                 >
-                    Create one now
+                    أنشئ ملاحظة جديدة
                 </button>
             </div>
             
